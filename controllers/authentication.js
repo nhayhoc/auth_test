@@ -6,15 +6,13 @@ const config = require('../config/main');
 const crypto = require('crypto');// Encrypt
 
 exports.login = function(req, res, next) {
-    User.findOne({
-        email: req.body.email
-    }, function (err,user) {
+    User.findOne({email: req.body.email}, function (err,user) { //callback1
         if (err) throw err;
         if (!user){
             res.json({success: false, message: 'Authentication failed. Email not found. '});
         } else {
             // check password
-            user.comparePassword(req.body.password, function (err, isMath) {
+            user.comparePassword(req.body.password, function (err, isMath) {//cacllback2
                 if (isMath && !err) {
                     //create the token
                     var token = jwt.sign(JSON.parse(JSON.stringify(user)),config.secret, {
@@ -96,6 +94,9 @@ exports.resendVerify = function(req,res,next) {
             res.status(422).json({error: "Your request could not be processed as enterted. Please try again!"});
             return next(err); 
         }
+        if (existingUser.verify == true) {
+            return res.status(200).json({error: "That email has been verified!"});
+        }
         crypto.randomBytes(48, (err, beffer)=>{
             var resetToken = beffer.toString('hex');
             if (err) { return next(err); }
@@ -120,7 +121,7 @@ exports.resendVerify = function(req,res,next) {
 exports.forgotPassword = function(req, res, next) {
     const email = req.body.email;
     //if user not found, return error
-    User.findOne({email}, (err, existingUser)=> {
+    User.findOne({email}, (err, existingUser)=> {//callback1
         if (err || existingUser == null){
             console.log("here");
             res.status(422).json({error: "Your request could not be processed as enterted. Please try again!"});
@@ -130,7 +131,7 @@ exports.forgotPassword = function(req, res, next) {
         //if user found, generate and save resetToken
         //generate a token with Crypto
         console.log("here 2");
-        crypto.randomBytes(48, (err, beffer)=>{
+        crypto.randomBytes(48, (err, beffer)=>{//callback2
             var resetToken = beffer.toString('hex');
             if (err) { return next(err); }
             //res.send('Your resetToken: ' + resetToken);
